@@ -3,24 +3,17 @@
 import { ReactNode, useEffect } from "react";
 import { useAuth } from "@/context/auth";
 import { useRouter } from "next/navigation";
-import Navbar from "@/components/Navbar";
+import Layout from "@/components/Layout";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!user) {
-      router.push("/"); // redirect to login if not logged in
-    }
+    if (!user) router.push("/"); // redirect ke login
   }, [user, router]);
 
-  if (!user) return null; // prevent flicker
+  if (!user) return null; // cegah flicker
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="p-4">{children}</main>
-    </div>
-  );
+  return <Layout>{children}</Layout>;
 }

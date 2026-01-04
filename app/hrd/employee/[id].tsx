@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
 import axios from "axios";
-import { useRouter } from "next/navigation";
 
-export default function CreateEmployee() {
+export default function EditEmployee() {
   const router = useRouter();
+  const { id } = useParams();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -15,28 +16,45 @@ export default function CreateEmployee() {
     photo: "",
     role: "EMPLOYEE",
   });
-  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const handleSubmit = async () => {
+  useEffect(() => {
+    const fetchEmployee = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/user/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        setForm({ ...res.data, password: "" });
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEmployee();
+  }, [id]);
+
+  const handleUpdate = async () => {
     try {
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/user/register`,
-        form,
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
+      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/${id}`, form, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
       router.push("/hrd/employee");
     } catch (err) {
-      setMsg("Gagal menambahkan karyawan");
       console.error(err);
     }
   };
 
+  if (loading) return <p>Loading...</p>;
+
   return (
     <div className="max-w-md mx-auto bg-white p-6 rounded shadow">
-      <h2 className="text-xl font-bold mb-4">Tambah Karyawan</h2>
-      {msg && <p className="text-red-600 mb-2">{msg}</p>}
+      <h2 className="text-xl font-bold mb-4">Edit Karyawan</h2>
       {["name", "email", "password", "phone", "position", "photo"].map(
         (field) => (
           <div key={field} className="mb-2">
@@ -62,10 +80,10 @@ export default function CreateEmployee() {
         <option value="HRD">HRD</option>
       </select>
       <button
-        onClick={handleSubmit}
-        className="bg-green-500 text-white px-4 py-2 rounded"
+        onClick={handleUpdate}
+        className="bg-blue-500 text-white px-4 py-2 rounded"
       >
-        Simpan
+        Update
       </button>
     </div>
   );
