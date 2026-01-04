@@ -1,8 +1,7 @@
 "use client";
-
 import { ReactNode, useEffect } from "react";
-import { useAuth } from "@/context/auth";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/auth";
 import Layout from "@/components/Layout";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -10,10 +9,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!user) router.push("/"); // redirect ke login
+    if (!user) router.push("/");
   }, [user, router]);
 
-  if (!user) return null; // cegah flicker
+  if (!user) return null;
 
   return <Layout>{children}</Layout>;
 }

@@ -1,4 +1,5 @@
 "use client";
+
 import {
   createContext,
   useContext,
@@ -11,6 +12,7 @@ import axios from "axios";
 
 interface AuthContextType {
   user: any;
+  setUser: (user: any) => void;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -38,9 +40,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
       { email, password }
     );
-    localStorage.setItem("token", res.data.access_token);
+    localStorage.setItem("token", res.data.access_token); // simpan token
     setUser(res.data.user);
-    router.push("/dashboard/profile");
+    router.push(
+      res.data.user.role === "HRD" ? "/hrd/employee" : "/dashboard/profile"
+    );
   };
 
   const logout = () => {
@@ -50,7 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, setUser, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
