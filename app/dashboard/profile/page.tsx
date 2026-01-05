@@ -14,6 +14,9 @@ export default function ProfilePage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
+  // Confirm modal
+  const [showConfirm, setShowConfirm] = useState(false);
+
   // Toast state
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
@@ -70,6 +73,7 @@ export default function ProfilePage() {
       );
     } finally {
       setLoading(false);
+      setShowConfirm(false);
     }
   };
 
@@ -127,7 +131,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal Edit */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-lg relative">
@@ -136,7 +140,7 @@ export default function ProfilePage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleUpdate();
+                setShowConfirm(true); // open confirm modal
               }}
               className="flex flex-col gap-4"
             >
@@ -187,6 +191,31 @@ export default function ProfilePage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Modal */}
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-lg relative">
+            <h3 className="text-lg font-bold mb-4">Konfirmasi Update</h3>
+            <p className="mb-4">Yakin ingin menyimpan perubahan ini?</p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="px-4 py-2 rounded border hover:bg-gray-100"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleUpdate}
+                disabled={loading}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:opacity-50"
+              >
+                {loading ? "Updating..." : "Ya, Simpan"}
+              </button>
+            </div>
           </div>
         </div>
       )}

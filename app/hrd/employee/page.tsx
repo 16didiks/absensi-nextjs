@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth";
 import api from "@/lib/api";
@@ -33,6 +32,10 @@ export default function EmployeePage() {
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
+
+  // Confirm modal state
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<() => void>(() => {});
 
   // Log state
   const [showLogModal, setShowLogModal] = useState(false);
@@ -73,7 +76,6 @@ export default function EmployeePage() {
 
   const openModal = (employee?: any) => {
     if (employee) {
-      // Edit mode
       setEditEmployee(employee);
       setName(employee.name);
       setEmail(employee.email);
@@ -82,7 +84,6 @@ export default function EmployeePage() {
       setPhoto(employee.photo || "");
       setRole(employee.role || "EMPLOYEE");
     } else {
-      // Create mode
       setEditEmployee(null);
       setName("");
       setEmail("");
@@ -97,8 +98,18 @@ export default function EmployeePage() {
 
   const closeModal = () => setShowModal(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const confirmSubmit = () => {
+    setConfirmAction(() => handleSubmit); // simpan referensi function
+    setShowConfirm(true);
+  };
+
+  const confirmDelete = (id: number) => {
+    setConfirmAction(() => () => handleDelete(id));
+    setShowConfirm(true);
+  };
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     try {
       setLoading(true);
       if (editEmployee) {
@@ -131,11 +142,11 @@ export default function EmployeePage() {
       );
     } finally {
       setLoading(false);
+      setShowConfirm(false);
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Apakah yakin ingin menghapus karyawan ini?")) return;
     try {
       await api.delete(`/user/${id}`);
       setEmployees(employees.filter((e) => e.id !== id));
@@ -143,11 +154,14 @@ export default function EmployeePage() {
     } catch (err) {
       console.error(err);
       showToastMessage("Gagal menghapus karyawan", "error");
+    } finally {
+      setShowConfirm(false);
     }
   };
 
   return (
     <div className="p-4">
+      {/* Header & Buttons */}
       <div className="flex justify-between items-center mb-4 flex-col md:flex-row gap-2">
         <h1 className="text-xl font-bold">Data Karyawan</h1>
         <div className="flex gap-2 flex-wrap">
@@ -168,11 +182,11 @@ export default function EmployeePage() {
         </div>
       </div>
 
+      {/* Table & Cards */}
       {loading ? (
         <p>Loading...</p>
       ) : (
         <>
-          {/* Desktop Table */}
           <div className="hidden md:block">
             <table className="table-auto w-full border-collapse border border-gray-300">
               <thead>
@@ -201,7 +215,7 @@ export default function EmployeePage() {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDelete(e.id)}
+                        onClick={() => confirmDelete(e.id)}
                         className="bg-red-500 px-2 py-1 rounded text-white hover:bg-red-600"
                       >
                         Delete
@@ -243,7 +257,7 @@ export default function EmployeePage() {
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDelete(e.id)}
+                    onClick={() => confirmDelete(e.id)}
                     className="bg-red-500 px-2 py-1 rounded text-white hover:bg-red-600 flex-1 text-center"
                   >
                     Delete
@@ -262,7 +276,13 @@ export default function EmployeePage() {
             <h2 className="text-xl font-bold mb-4">
               {editEmployee ? "Edit Karyawan" : "Tambah Karyawan"}
             </h2>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                confirmSubmit();
+              }}
+              className="flex flex-col gap-3"
+            >
               <input
                 type="text"
                 placeholder="Nama"
@@ -336,78 +356,38 @@ export default function EmployeePage() {
         </div>
       )}
 
-      {/* Modal Log Perubahan */}
-      {/* Modal Log Perubahan */}
-      {showLogModal && (
+      {/* Modal Confirm */}
+      {showConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded shadow-lg w-full max-w-3xl max-h-[80vh] flex flex-col">
-            {/* Header modal */}
-            <div className="flex justify-between items-center p-4 border-b sticky top-0 bg-white z-10">
-              <h2 className="text-xl font-bold">Log Perubahan Data</h2>
+          <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-lg relative">
+            <h3 className="text-lg font-bold mb-4">Konfirmasi</h3>
+            <p className="mb-4">Yakin ingin melanjutkan aksi ini?</p>
+            <div className="flex justify-end gap-2">
               <button
-                onClick={() => setShowLogModal(false)}
-                className="text-gray-500 hover:text-gray-700 text-xl font-bold"
-              >
-                ×
-              </button>
-            </div>
-
-            {/* Konten scrollable */}
-            <div className="overflow-y-auto p-4 flex-1">
-              {logLoading ? (
-                <p>Loading...</p>
-              ) : profileChangeLog.length === 0 ? (
-                <p>Tidak ada log perubahan.</p>
-              ) : (
-                <table className="table-auto w-full border-collapse border border-gray-300">
-                  <thead className="sticky top-0 bg-gray-100 z-5">
-                    <tr>
-                      <th className="border px-2 py-1">User</th>
-                      <th className="border px-2 py-1">Field</th>
-                      <th className="border px-2 py-1">Old Value</th>
-                      <th className="border px-2 py-1">New Value</th>
-                      <th className="border px-2 py-1">Tanggal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {profileChangeLog.map((log) => (
-                      <tr key={log.id} className="hover:bg-gray-50">
-                        <td className="border px-2 py-1">{log.user.name}</td>
-                        <td className="border px-2 py-1">{log.field}</td>
-                        <td className="border px-2 py-1">{log.oldValue}</td>
-                        <td className="border px-2 py-1">{log.newValue}</td>
-                        <td className="border px-2 py-1">
-                          {new Date(log.createdAt).toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-
-            {/* Footer modal */}
-            <div className="flex justify-end p-4 border-t">
-              <button
-                onClick={() => setShowLogModal(false)}
+                onClick={() => setShowConfirm(false)}
                 className="px-4 py-2 rounded border hover:bg-gray-100"
               >
-                Tutup
+                Batal
+              </button>
+              <button
+                onClick={confirmAction}
+                disabled={loading}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:opacity-50"
+              >
+                {loading ? "Loading..." : "Ya, Lanjutkan"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Floating Toast */}
+      {/* Toast */}
       {showToast && (
         <div className="fixed top-5 right-5 z-50">
           <div
             className={`${
-              toastType === "success"
-                ? "bg-green-500 text-white"
-                : "bg-red-500 text-white"
-            } px-4 py-3 rounded shadow-lg flex items-center gap-2 animate-slide-in`}
+              toastType === "success" ? "bg-green-500" : "bg-red-500"
+            } text-white px-4 py-3 rounded shadow-lg flex items-center gap-2 animate-slide-in`}
           >
             <span>{toastMessage}</span>
           </div>
