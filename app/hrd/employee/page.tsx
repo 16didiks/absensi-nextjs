@@ -340,47 +340,54 @@ export default function EmployeePage() {
       {/* Modal Log Perubahan */}
       {showLogModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded p-6 w-full max-w-2xl shadow-lg relative max-h-[80vh] overflow-y-auto">
-            {/* Tombol close pojok kanan atas */}
-            <button
-              onClick={() => setShowLogModal(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-lg font-bold"
-            >
-              ×
-            </button>
+          <div className="bg-white rounded shadow-lg w-full max-w-3xl max-h-[80vh] flex flex-col">
+            {/* Header modal */}
+            <div className="flex justify-between items-center p-4 border-b sticky top-0 bg-white z-10">
+              <h2 className="text-xl font-bold">Log Perubahan Data</h2>
+              <button
+                onClick={() => setShowLogModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-xl font-bold"
+              >
+                ×
+              </button>
+            </div>
 
-            <h2 className="text-xl font-bold mb-4">Log Perubahan Data</h2>
-            {logLoading ? (
-              <p>Loading...</p>
-            ) : profileChangeLog.length === 0 ? (
-              <p>Tidak ada log perubahan.</p>
-            ) : (
-              <table className="table-auto w-full border-collapse border border-gray-300">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border px-2 py-1">User</th>
-                    <th className="border px-2 py-1">Field</th>
-                    <th className="border px-2 py-1">Old Value</th>
-                    <th className="border px-2 py-1">New Value</th>
-                    <th className="border px-2 py-1">Tanggal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {profileChangeLog.map((log) => (
-                    <tr key={log.id} className="hover:bg-gray-50">
-                      <td className="border px-2 py-1">{log.user.name}</td>
-                      <td className="border px-2 py-1">{log.field}</td>
-                      <td className="border px-2 py-1">{log.oldValue}</td>
-                      <td className="border px-2 py-1">{log.newValue}</td>
-                      <td className="border px-2 py-1">
-                        {new Date(log.createdAt).toLocaleString()}
-                      </td>
+            {/* Konten scrollable */}
+            <div className="overflow-y-auto p-4 flex-1">
+              {logLoading ? (
+                <p>Loading...</p>
+              ) : profileChangeLog.length === 0 ? (
+                <p>Tidak ada log perubahan.</p>
+              ) : (
+                <table className="table-auto w-full border-collapse border border-gray-300">
+                  <thead className="sticky top-0 bg-gray-100 z-5">
+                    <tr>
+                      <th className="border px-2 py-1">User</th>
+                      <th className="border px-2 py-1">Field</th>
+                      <th className="border px-2 py-1">Old Value</th>
+                      <th className="border px-2 py-1">New Value</th>
+                      <th className="border px-2 py-1">Tanggal</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-            <div className="flex justify-end mt-4">
+                  </thead>
+                  <tbody>
+                    {profileChangeLog.map((log) => (
+                      <tr key={log.id} className="hover:bg-gray-50">
+                        <td className="border px-2 py-1">{log.user.name}</td>
+                        <td className="border px-2 py-1">{log.field}</td>
+                        <td className="border px-2 py-1">{log.oldValue}</td>
+                        <td className="border px-2 py-1">{log.newValue}</td>
+                        <td className="border px-2 py-1">
+                          {new Date(log.createdAt).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Footer modal */}
+            <div className="flex justify-end p-4 border-t">
               <button
                 onClick={() => setShowLogModal(false)}
                 className="px-4 py-2 rounded border hover:bg-gray-100"
