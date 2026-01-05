@@ -36,35 +36,40 @@ export default function AttendancePage() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 bg-white shadow-md rounded-lg p-6 relative">
-      <h1 className="text-2xl font-bold mb-6 text-center">Absensi</h1>
+    <div className="max-w-md mx-auto mt-12 p-6 bg-white rounded-xl shadow-lg relative">
+      <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">
+        Absensi
+      </h1>
 
-      <div className="flex gap-4 justify-center mb-6">
+      <div className="flex flex-col md:flex-row gap-4 justify-center mb-6">
         <button
           onClick={() => handleAttendance("IN")}
           disabled={loading}
-          className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded font-semibold transition disabled:opacity-50"
+          className="bg-green-600 hover:bg-green-700 active:scale-95 text-white px-8 py-3 rounded-xl font-semibold shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Masuk
         </button>
         <button
           onClick={() => handleAttendance("OUT")}
           disabled={loading}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-semibold transition disabled:opacity-50"
+          className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-8 py-3 rounded-xl font-semibold shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Pulang
         </button>
       </div>
+
+      {/* Optional: Info terakhir absensi */}
+      <p className="text-center text-gray-500 italic">
+        {message && `${type === "success" ? "✅" : "❌"} ${message}`}
+      </p>
 
       {/* Floating Toast */}
       {showToast && (
         <div className="fixed top-5 right-5 z-50">
           <div
             className={`${
-              type === "success"
-                ? "bg-green-500 text-white"
-                : "bg-red-500 text-white"
-            } px-4 py-3 rounded shadow-lg flex items-center gap-2 animate-slide-in`}
+              type === "success" ? "bg-green-500" : "bg-red-500"
+            } text-white px-5 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-slide-in`}
           >
             <span>{message}</span>
           </div>
