@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import axios from "axios";
+import api from "@/lib/api";
 
-export default function EditEmployee() {
+export default function EditEmployeePage() {
   const router = useRouter();
-  const { id } = useParams();
+  const params = useParams();
+  const id = params.id;
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -16,74 +18,119 @@ export default function EditEmployee() {
     photo: "",
     role: "EMPLOYEE",
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/user/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const res = await api.get(`/user/${id}`);
         setForm({ ...res.data, password: "" });
       } catch (err) {
         console.error(err);
-      } finally {
-        setLoading(false);
+        alert("Gagal memuat data karyawan");
+        router.push("/hrd/employee");
       }
     };
     fetchEmployee();
-  }, [id]);
+  }, [id, router]);
 
-  const handleUpdate = async () => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async () => {
     try {
-      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/${id}`, form, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      setLoading(true);
+      const payload = { ...form };
+      if (!payload.password) delete payload.password; // jangan kirim password kosong
+      await api.put(`/user/${id}`, payload);
+      alert("Data karyawan berhasil diperbarui");
       router.push("/hrd/employee");
     } catch (err) {
       console.error(err);
+      alert("Gagal memperbarui karyawan");
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) return <p>Loading...</p>;
-
   return (
     <div className="max-w-md mx-auto bg-white p-6 rounded shadow">
-      <h2 className="text-xl font-bold mb-4">Edit Karyawan</h2>
-      {["name", "email", "password", "phone", "position", "photo"].map(
-        (field) => (
-          <div key={field} className="mb-2">
-            <label className="block">
-              {field.charAt(0).toUpperCase() + field.slice(1)}
-            </label>
-            <input
-              type={field === "password" ? "password" : "text"}
-              value={form[field as keyof typeof form]}
-              onChange={(e) => setForm({ ...form, [field]: e.target.value })}
-              className="border p-2 w-full"
-            />
-          </div>
-        )
-      )}
-      <label className="block mb-2">Role</label>
+      <h1 className="text-xl font-bold mb-4">Edit Karyawan</h1>
+
+      <label className="block mb-1">Nama</label>
+      <input
+        name="name"
+        type="text"
+        value={form.name}
+        onChange={handleChange}
+        className="border p-2 w-full mb-2"
+      />
+
+      <label className="block mb-1">Email</label>
+      <input
+        name="email"
+        type="email"
+        value={form.email}
+        onChange={handleChange}
+        className="border p-2 w-full mb-2"
+      />
+
+      <label className="block mb-1">Password Baru</label>
+      <input
+        name="password"
+        type="password"
+        value={form.password}
+        onChange={handleChange}
+        className="border p-2 w-full mb-2"
+      />
+
+      <label className="block mb-1">Nomor HP</label>
+      <input
+        name="phone"
+        type="text"
+        value={form.phone}
+        onChange={handleChange}
+        className="border p-2 w-full mb-2"
+      />
+
+      <label className="block mb-1">Posisi</label>
+      <input
+        name="position"
+        type="text"
+        value={form.position}
+        onChange={handleChange}
+        className="border p-2 w-full mb-2"
+      />
+
+      <label className="block mb-1">Foto URL</label>
+      <input
+        name="photo"
+        type="text"
+        value={form.photo}
+        onChange={handleChange}
+        className="border p-2 w-full mb-2"
+      />
+
+      <label className="block mb-1">Role</label>
       <select
+        name="role"
         value={form.role}
-        onChange={(e) => setForm({ ...form, role: e.target.value })}
+        onChange={handleChange}
         className="border p-2 w-full mb-4"
       >
         <option value="EMPLOYEE">EMPLOYEE</option>
         <option value="HRD">HRD</option>
       </select>
+
       <button
-        onClick={handleUpdate}
-        className="bg-blue-500 text-white px-4 py-2 rounded"
+        onClick={handleSubmit}
+        disabled={loading}
+        className="bg-yellow-400 text-white px-4 py-2 rounded hover:bg-yellow-500"
       >
-        Update
+        {loading ? "Menyimpan..." : "Simpan"}
       </button>
     </div>
   );

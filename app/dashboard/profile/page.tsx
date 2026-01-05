@@ -1,17 +1,35 @@
 "use client";
 
 import { useAuth } from "@/context/auth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "@/lib/api";
 
 export default function ProfilePage() {
-  const { user, setUser } = useAuth(); // perlu setUser supaya bisa update state user setelah update
-  const [photo, setPhoto] = useState(user?.photo || "");
-  const [phone, setPhone] = useState(user?.phone || "");
+  const { user, setUser } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+  const [photo, setPhoto] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  if (!user) return <p>Loading...</p>;
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await api.get("/user/me/profile");
+        setProfile(res.data);
+        setPhoto(res.data.photo || "");
+        setPhone(res.data.phone || "");
+      } catch (err) {
+        console.error("Gagal ambil data profile", err);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  if (!profile)
+    return (
+      <p className="text-center mt-20 text-gray-500 font-medium">Loading...</p>
+    );
 
   const handleUpdate = async () => {
     try {
@@ -19,10 +37,11 @@ export default function ProfilePage() {
       const payload: any = { photo, phone };
       if (password) payload.password = password;
 
-      const res = await api.put(`/user/${user.id}`, payload);
-      setUser(res.data); // update user state
+      const res = await api.put(`/user/${profile.id}`, payload);
+      setProfile(res.data);
+      setUser(res.data);
       alert("Profile berhasil diperbarui!");
-      setPassword(""); // reset password input
+      setPassword("");
     } catch (err) {
       console.error(err);
       alert("Gagal update profile");
@@ -32,54 +51,71 @@ export default function ProfilePage() {
   };
 
   return (
-    <div>
-      <h1 className="text-xl font-bold mb-4">Profil Karyawan</h1>
+    <div className="max-w-xl mx-auto mt-10 bg-white shadow-md rounded-lg p-6">
+      <h1 className="text-2xl font-bold mb-6 text-center">Profil Karyawan</h1>
 
-      <p>
-        <strong>Nama:</strong> {user.name}
-      </p>
-      <p>
-        <strong>Email:</strong> {user.email}
-      </p>
-      <p>
-        <strong>Posisi:</strong> {user.position}
-      </p>
+      <div className="space-y-3">
+        <p>
+          <span className="font-semibold">Nama:</span> {profile.name}
+        </p>
+        <p>
+          <span className="font-semibold">Email:</span> {profile.email}
+        </p>
+        <p>
+          <span className="font-semibold">Posisi:</span> {profile.position}
+        </p>
 
-      <div className="mt-4">
-        <label className="block mb-1">Foto URL</label>
-        <input
-          type="text"
-          value={photo}
-          onChange={(e) => setPhoto(e.target.value)}
-          className="border p-2 w-full mb-2"
-        />
-        {photo && (
-          <img src={photo} alt="Foto" className="w-24 h-24 rounded-full mb-2" />
-        )}
+        <div className="mt-4 space-y-3">
+          <div className="flex flex-col items-center">
+            <label className="block font-medium mb-1">Foto URL</label>
+            <input
+              type="text"
+              value={photo}
+              onChange={(e) => setPhoto(e.target.value)}
+              className="border p-2 w-full rounded mb-2"
+            />
 
-        <label className="block mb-1">Nomor HP</label>
-        <input
-          type="text"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          className="border p-2 w-full mb-2"
-        />
+            {photo ? (
+              <img
+                src={photo}
+                alt="Foto"
+                className="w-28 h-28 rounded-full border object-cover"
+              />
+            ) : (
+              <div className="w-28 h-28 rounded-full border border-gray-300 flex items-center justify-center text-gray-400 font-medium">
+                No Photo
+              </div>
+            )}
+          </div>
 
-        <label className="block mb-1">Password Baru</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="border p-2 w-full mb-2"
-        />
+          <div>
+            <label className="block font-medium mb-1">Nomor HP</label>
+            <input
+              type="text"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="border p-2 w-full rounded"
+            />
+          </div>
 
-        <button
-          onClick={handleUpdate}
-          disabled={loading}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          {loading ? "Updating..." : "Update Profile"}
-        </button>
+          <div>
+            <label className="block font-medium mb-1">Password Baru</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="border p-2 w-full rounded"
+            />
+          </div>
+
+          <button
+            onClick={handleUpdate}
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded transition"
+          >
+            {loading ? "Updating..." : "Update Profile"}
+          </button>
+        </div>
       </div>
     </div>
   );

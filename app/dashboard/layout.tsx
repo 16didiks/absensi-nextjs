@@ -12,7 +12,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     if (!user) router.push("/");
   }, [user, router]);
 
-  if (!user) return null;
+  if (user === undefined) return null;
+  if (!user) {
+    router.push("/");
+    return null;
+  }
 
   return <Layout>{children}</Layout>;
 }
