@@ -34,6 +34,11 @@ export default function EmployeePage() {
     setTimeout(() => setShowToast(false), 3000);
   };
 
+  // Log state
+  const [showLogModal, setShowLogModal] = useState(false);
+  const [profileChangeLog, setProfileChangeLog] = useState<any[]>([]);
+  const [logLoading, setLogLoading] = useState(false);
+
   const fetchEmployees = async () => {
     if (!user) return;
     try {
@@ -45,6 +50,20 @@ export default function EmployeePage() {
       showToastMessage("Gagal mengambil data karyawan", "error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProfileChangeLog = async () => {
+    try {
+      setLogLoading(true);
+      const res = await api.get("/user/profile-change-log");
+      setProfileChangeLog(res.data || []);
+      setShowLogModal(true);
+    } catch (err) {
+      console.error(err);
+      showToastMessage("Gagal mengambil log perubahan", "error");
+    } finally {
+      setLogLoading(false);
     }
   };
 
@@ -83,7 +102,6 @@ export default function EmployeePage() {
     try {
       setLoading(true);
       if (editEmployee) {
-        // Update
         const payload: any = { name, email, phone, position, photo, role };
         if (password) payload.password = password;
         const res = await api.put(`/user/${editEmployee.id}`, payload);
@@ -92,7 +110,6 @@ export default function EmployeePage() {
         );
         showToastMessage("Karyawan berhasil diupdate", "success");
       } else {
-        // Create
         await api.post("/user/register", {
           name,
           email,
@@ -103,7 +120,7 @@ export default function EmployeePage() {
           role,
         });
         showToastMessage("Karyawan berhasil ditambahkan", "success");
-        fetchEmployees(); // reload data
+        fetchEmployees();
       }
       closeModal();
     } catch (err: any) {
@@ -133,12 +150,22 @@ export default function EmployeePage() {
     <div className="p-4">
       <div className="flex justify-between items-center mb-4 flex-col md:flex-row gap-2">
         <h1 className="text-xl font-bold">Data Karyawan</h1>
-        <button
-          onClick={() => openModal()}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          Tambah Karyawan
-        </button>
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => openModal()}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Tambah Karyawan
+          </button>
+          {user?.role === "HRD" && (
+            <button
+              onClick={fetchProfileChangeLog}
+              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+            >
+              Lihat Log Perubahan
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -228,7 +255,7 @@ export default function EmployeePage() {
         </>
       )}
 
-      {/* Modal */}
+      {/* Modal Create / Update */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded p-6 w-full max-w-md shadow-lg relative">
@@ -305,6 +332,62 @@ export default function EmployeePage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Log Perubahan */}
+      {/* Modal Log Perubahan */}
+      {showLogModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded p-6 w-full max-w-2xl shadow-lg relative max-h-[80vh] overflow-y-auto">
+            {/* Tombol close pojok kanan atas */}
+            <button
+              onClick={() => setShowLogModal(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-lg font-bold"
+            >
+              ×
+            </button>
+
+            <h2 className="text-xl font-bold mb-4">Log Perubahan Data</h2>
+            {logLoading ? (
+              <p>Loading...</p>
+            ) : profileChangeLog.length === 0 ? (
+              <p>Tidak ada log perubahan.</p>
+            ) : (
+              <table className="table-auto w-full border-collapse border border-gray-300">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border px-2 py-1">User</th>
+                    <th className="border px-2 py-1">Field</th>
+                    <th className="border px-2 py-1">Old Value</th>
+                    <th className="border px-2 py-1">New Value</th>
+                    <th className="border px-2 py-1">Tanggal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {profileChangeLog.map((log) => (
+                    <tr key={log.id} className="hover:bg-gray-50">
+                      <td className="border px-2 py-1">{log.user.name}</td>
+                      <td className="border px-2 py-1">{log.field}</td>
+                      <td className="border px-2 py-1">{log.oldValue}</td>
+                      <td className="border px-2 py-1">{log.newValue}</td>
+                      <td className="border px-2 py-1">
+                        {new Date(log.createdAt).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => setShowLogModal(false)}
+                className="px-4 py-2 rounded border hover:bg-gray-100"
+              >
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}
