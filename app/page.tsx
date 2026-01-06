@@ -16,6 +16,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
       router.push("/dashboard/profile");
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       setError("Login gagal, cek email/password");
     }
