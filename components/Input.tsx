@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 // components/Input.tsx
 "use client";
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}

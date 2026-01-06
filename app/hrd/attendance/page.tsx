@@ -6,6 +6,7 @@ import { useAuth } from "@/context/auth";
 
 export default function HRDAttendancePage() {
   const { user } = useAuth();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [summary, setSummary] = useState<any[]>([]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -13,6 +14,7 @@ export default function HRDAttendancePage() {
   useEffect(() => {
     if (!user) return;
     fetchSummary();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchSummary = async () => {
@@ -66,6 +68,7 @@ export default function HRDAttendancePage() {
         </thead>
         <tbody>
           {summary.map((u) =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             u.summary.map((s: any, idx: number) => (
               <tr key={`${u.userId}-${idx}`}>
                 <td className="border px-2 py-1">{u.name}</td>

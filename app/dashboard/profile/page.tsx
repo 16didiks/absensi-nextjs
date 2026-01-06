@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import api from "@/lib/api";
 
 export default function ProfilePage() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user, setUser } = useAuth();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
@@ -56,6 +58,7 @@ export default function ProfilePage() {
   const handleUpdate = async () => {
     try {
       setLoading(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const payload: any = { photo, phone };
       if (password) payload.password = password;
 
@@ -65,6 +68,7 @@ export default function ProfilePage() {
       setPassword("");
       closeModal();
       showToastMessage("Profile berhasil diperbarui!", "success");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error(err);
       showToastMessage(

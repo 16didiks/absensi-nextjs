@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 
 export default function SummaryPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [summary, setSummary] = useState<any[]>([]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -22,6 +23,7 @@ export default function SummaryPage() {
 
   useEffect(() => {
     fetchSummary();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

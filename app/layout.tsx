@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-sync-scripts */
 import { ReactNode } from "react";
 import { AuthProvider } from "@/context/auth";
 

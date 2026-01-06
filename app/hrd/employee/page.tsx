@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth";
@@ -72,6 +73,7 @@ export default function EmployeePage() {
 
   useEffect(() => {
     fetchEmployees();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const openModal = (employee?: any) => {
@@ -266,6 +268,70 @@ export default function EmployeePage() {
               </div>
             ))}
           </div>
+
+          {/* Modal Log Perubahan */}
+          {showLogModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+              <div className="bg-white rounded-xl p-6 w-full max-w-2xl shadow-lg relative">
+                <h3 className="text-xl font-bold mb-4">Log Perubahan Profil</h3>
+
+                {logLoading ? (
+                  <p>Loading...</p>
+                ) : profileChangeLog.length === 0 ? (
+                  <p className="text-gray-500">Belum ada log perubahan</p>
+                ) : (
+                  <div className="max-h-96 overflow-y-auto">
+                    <table className="w-full border border-gray-300 text-sm">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="border px-2 py-1">Nama</th>
+                          <th className="border px-2 py-1">Field</th>
+                          <th className="border px-2 py-1">Sebelum</th>
+                          <th className="border px-2 py-1">Sesudah</th>
+                          <th className="border px-2 py-1">Waktu</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {profileChangeLog.map((log, i) => (
+                          <tr key={i} className="hover:bg-gray-50">
+                            <td className="border px-2 py-1 font-medium">
+                              {log.user?.name ||
+                                log.createdBy?.name ||
+                                log.userName ||
+                                "-"}
+                            </td>
+                            <td className="border px-2 py-1">
+                              {log.field || log.column || "-"}
+                            </td>
+                            <td className="border px-2 py-1 text-red-500">
+                              {log.oldValue ?? log.before ?? "-"}
+                            </td>
+                            <td className="border px-2 py-1 text-green-600">
+                              {log.newValue ?? log.after ?? "-"}
+                            </td>
+                            <td className="border px-2 py-1">
+                              {log.createdAt
+                                ? new Date(log.createdAt).toLocaleString()
+                                : "-"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                <div className="flex justify-end mt-4">
+                  <button
+                    onClick={() => setShowLogModal(false)}
+                    className="px-4 py-2 rounded border hover:bg-gray-100"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
 

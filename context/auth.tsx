@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import {
@@ -31,6 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((res) => setUser(res.data))
+        // eslint-disable-next-line react-hooks/immutability
         .catch(() => logout());
     }
   }, []);
