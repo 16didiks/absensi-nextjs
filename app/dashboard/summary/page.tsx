@@ -10,25 +10,34 @@ export default function SummaryPage() {
 
   const fetchSummary = async () => {
     const token = localStorage.getItem("token");
-    const res = await axios.get(
-      `${process.env.NEXT_PUBLIC_API_URL}/attendances?from=${from || ""}&to=${
-        to || ""
-      }`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+
+    // 🔑 FIX: kirim query hanya jika ada value
+    let url = `${process.env.NEXT_PUBLIC_API_URL}/attendances`;
+
+    const params: string[] = [];
+    if (from) params.push(`from=${from}`);
+    if (to) params.push(`to=${to}`);
+
+    if (params.length > 0) {
+      url += `?${params.join("&")}`;
+    }
+
+    const res = await axios.get(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
     setSummary(res.data.data || []);
   };
 
   useEffect(() => {
-    fetchSummary();
+    fetchSummary(); // default → tanpa filter
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div>
       <h1 className="text-xl font-bold mb-4">Summary Absen</h1>
+
       <div className="flex gap-2 mb-4">
         <input
           type="date"
