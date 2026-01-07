@@ -1,6 +1,7 @@
 "use client";
+
 import { useAuth } from "@/context/auth";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 
 export default function AttendancePage() {
@@ -10,22 +11,30 @@ export default function AttendancePage() {
   const [showToast, setShowToast] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const handleAttendance = async (attendanceType: "IN" | "OUT") => {
     if (!user) return;
+
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
+
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/attendances`,
         { type: attendanceType },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setMessage(res.data.message || "Berhasil absensi!");
+      setMessage(res.data.message || "Absensi berhasil");
       setType("success");
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setMessage(err.response?.data?.message || "Gagal absensi");
       setType("error");
@@ -36,54 +45,79 @@ export default function AttendancePage() {
     }
   };
 
+  const formattedDate = time.toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+
+  const formattedTime = time.toLocaleTimeString("id-ID");
+
   return (
-    <div className="max-w-md mx-auto mt-12 p-6 bg-white rounded-xl shadow-lg relative">
-      <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">
-        Absensi
+    <div className="max-w-md mx-auto mt-14 p-6 bg-white rounded-2xl shadow-xl relative">
+      {/* TITLE */}
+      <h1 className="text-3xl font-bold text-center text-gray-800">
+        Absensi Harian
       </h1>
 
-      <div className="flex flex-col md:flex-row gap-4 justify-center mb-6">
+      {/* DATE */}
+      <p className="text-center text-gray-500 mt-1">{formattedDate}</p>
+
+      {/* STATUS CARD → CLOCK */}
+      <div className="bg-gray-50 border rounded-2xl p-6 text-center my-6">
+        <div className="text-5xl font-mono font-bold text-gray-800">
+          {formattedTime}
+        </div>
+        <p className="text-sm text-gray-500 mt-2">Jam kerja 08:00 – 17:00</p>
+      </div>
+
+      {/* ACTION BUTTONS */}
+      <div className="flex flex-col md:flex-row gap-4 justify-center">
         <button
           onClick={() => handleAttendance("IN")}
           disabled={loading}
-          className="bg-green-600 hover:bg-green-700 active:scale-95 text-white px-8 py-3 rounded-xl font-semibold shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 bg-green-600 hover:bg-green-700 active:scale-95 text-white py-3 rounded-xl font-semibold shadow transition disabled:opacity-50"
         >
-          Masuk
+          {loading ? "Memproses..." : "Check In"}
         </button>
+
         <button
           onClick={() => handleAttendance("OUT")}
           disabled={loading}
-          className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-8 py-3 rounded-xl font-semibold shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white py-3 rounded-xl font-semibold shadow transition disabled:opacity-50"
         >
-          Pulang
+          {loading ? "Memproses..." : "Check Out"}
         </button>
       </div>
 
-      {/* Optional: Info terakhir absensi */}
-      <p className="text-center text-gray-500 italic">
-        {message && `${type === "success" ? "✅" : "❌"} ${message}`}
-      </p>
+      {/* MESSAGE */}
+      {message && (
+        <p className="text-center text-sm text-gray-500 italic mt-4">
+          {type === "success" ? "✅" : "❌"} {message}
+        </p>
+      )}
 
-      {/* Floating Toast */}
+      {/* TOAST */}
       {showToast && (
-        <div className="fixed top-5 right-5 z-50">
+        <div className="fixed top-6 right-6 z-50">
           <div
             className={`${
               type === "success" ? "bg-green-500" : "bg-red-500"
-            } text-white px-5 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-slide-in`}
+            } text-white px-5 py-3 rounded-lg shadow-lg animate-slide-in`}
           >
-            <span>{message}</span>
+            {message}
           </div>
         </div>
       )}
 
       <style jsx>{`
         @keyframes slide-in {
-          0% {
+          from {
             transform: translateX(100%);
             opacity: 0;
           }
-          100% {
+          to {
             transform: translateX(0);
             opacity: 1;
           }

@@ -1,92 +1,78 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+
 import { useAuth } from "@/context/auth";
 import { useState, useEffect } from "react";
 import api from "@/lib/api";
 
 export default function ProfilePage() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { user, setUser } = useAuth();
+  const { setUser } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  // Modal state
   const [showModal, setShowModal] = useState(false);
-  const [photo, setPhoto] = useState<File | string>("");
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
-  // Confirm modal
   const [showConfirm, setShowConfirm] = useState(false);
-
-  // Toast state
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
   const [showToast, setShowToast] = useState(false);
 
-  const showToastMessage = (message: string, type: "success" | "error") => {
-    setToastMessage(message);
+  const showToastMessage = (msg: string, type: "success" | "error") => {
+    setToastMessage(msg);
     setToastType(type);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  // Fetch profile dari backend
   const fetchProfile = async () => {
-    try {
-      const res = await api.get("/user/me/profile");
-      setProfile(res.data);
-    } catch (err) {
-      console.error("Gagal ambil data profile", err);
-      showToastMessage("Gagal ambil data profile", "error");
-    }
+    const res = await api.get("/user/me/profile");
+    setProfile(res.data);
+    return res.data;
   };
 
   useEffect(() => {
     fetchProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const openModal = () => {
-    if (!profile) return;
-    setPhoto(profile.photo || "");
     setPhone(profile.phone || "");
     setPassword("");
+    setPhoto(null);
+    setPhotoPreview(profile.photo || null);
     setShowModal(true);
   };
-
-  const closeModal = () => setShowModal(false);
 
   const handleUpdate = async () => {
     try {
       setLoading(true);
-
       const formData = new FormData();
-      formData.append("phone", phone);
-      if (password) formData.append("password", password);
+
+      if (phone !== profile.phone) {
+        formData.append("phone", phone);
+      }
+
+      if (password) {
+        formData.append("password", password);
+      }
 
       if (photo) {
-        if (typeof photo === "string") {
-          formData.append("photo", photo); // URL lama
-        } else {
-          formData.append("photo", photo); // File baru
-        }
+        formData.append("photo", photo);
       }
 
       await api.patch("/user/me", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      // Setelah sukses patch, fetch ulang profile dari backend
-      await fetchProfile();
-      // Update user context supaya global state juga terbaru
-      setUser(profile);
+      const updated = await fetchProfile();
+      setUser(updated);
 
-      setPassword("");
-      closeModal();
-      showToastMessage("Profile berhasil diperbarui!", "success");
+      setShowModal(false);
+      showToastMessage("Profile berhasil diperbarui", "success");
     } catch (err: any) {
-      console.error(err);
       showToastMessage(
         err.response?.data?.message || "Gagal update profile",
         "error"
@@ -97,122 +83,166 @@ export default function ProfilePage() {
     }
   };
 
-  if (!profile)
+  if (!profile) {
     return (
-      <p className="text-center mt-20 text-gray-500 font-medium">Loading...</p>
+      <div className="max-w-3xl mx-auto mt-16 animate-pulse">
+        <div className="h-40 bg-gray-200 rounded-xl mb-6" />
+        <div className="h-24 bg-gray-200 rounded-xl" />
+      </div>
     );
+  }
 
   return (
-    <div className="max-w-3xl mx-auto mt-10 p-6">
-      <div className="bg-white shadow-lg rounded-xl overflow-hidden">
-        {/* Header */}
-        <div className="bg-blue-600 text-white p-6 text-center">
-          <h1 className="text-3xl font-bold">{profile.name}</h1>
-          <p className="text-blue-100 mt-1">{profile.email}</p>
-          <p className="mt-1">{profile.position}</p>
+    <div className="max-w-4xl mx-auto mt-12 px-4">
+      <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        {/* HEADER */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-white text-center">
+          <img
+            src={profile.photo || "/avatar.png"}
+            className="w-32 h-32 rounded-full object-cover mx-auto border-4 border-white shadow-lg"
+          />
+          <h1 className="text-2xl font-bold mt-4">{profile.name}</h1>
+          <p className="opacity-90">{profile.email}</p>
+          <span className="inline-block mt-2 px-4 py-1 rounded-full text-sm bg-white/20">
+            {profile.position}
+          </span>
+          <br />
           <button
             onClick={openModal}
-            className="mt-4 bg-white text-blue-600 font-semibold px-4 py-2 rounded-lg hover:bg-gray-100 transition"
+            className="mt-5 bg-white text-blue-600 px-6 py-2 rounded-xl font-semibold hover:bg-gray-100 transition"
           >
             Edit Profile
           </button>
         </div>
 
-        {/* Info */}
-        <div className="p-6 flex flex-col md:flex-row items-center gap-6">
-          <div className="flex flex-col items-center">
-            {profile.photo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={profile.photo}
-                alt="Foto"
-                className="w-32 h-32 rounded-full border-2 border-blue-200 object-cover"
-              />
-            ) : (
-              <div className="w-32 h-32 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-400 font-medium">
-                No Photo
+        {/* CONTENT */}
+        <div className="grid md:grid-cols-2 gap-6 p-8">
+          {/* INFORMASI UMUM */}
+          <div>
+            <h3 className="font-semibold text-gray-700 mb-4">Informasi Umum</h3>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm text-gray-500">Nama</label>
+                <input
+                  value={profile.name}
+                  disabled
+                  className="w-full mt-1 bg-gray-100 border rounded-lg px-3 py-2 text-gray-700 cursor-not-allowed"
+                />
               </div>
-            )}
+
+              <div>
+                <label className="text-sm text-gray-500">Email</label>
+                <input
+                  value={profile.email}
+                  disabled
+                  className="w-full mt-1 bg-gray-100 border rounded-lg px-3 py-2 text-gray-700 cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-500">Posisi</label>
+                <input
+                  value={profile.position || "-"}
+                  disabled
+                  className="w-full mt-1 bg-gray-100 border rounded-lg px-3 py-2 text-gray-700 cursor-not-allowed"
+                />
+              </div>
+            </div>
           </div>
-          <div className="space-y-2 flex-1">
-            <p>
-              <span className="font-semibold">Nama:</span> {profile.name}
-            </p>
-            <p>
-              <span className="font-semibold">Email:</span> {profile.email}
-            </p>
-            <p>
-              <span className="font-semibold">Posisi:</span> {profile.position}
-            </p>
-            <p>
-              <span className="font-semibold">Nomor HP:</span>{" "}
-              {profile.phone || "-"}
-            </p>
+
+          {/* KONTAK */}
+          <div>
+            <h3 className="font-semibold text-gray-700 mb-4">Kontak</h3>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm text-gray-500">Nomor HP</label>
+                <input
+                  value={profile.phone || "-"}
+                  disabled
+                  className="w-full mt-1 bg-gray-100 border rounded-lg px-3 py-2 text-gray-700 cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-500">
+                  Tanggal Bergabung
+                </label>
+                <input
+                  value={new Date(profile.createdAt).toLocaleDateString(
+                    "id-ID"
+                  )}
+                  disabled
+                  className="w-full mt-1 bg-gray-100 border rounded-lg px-3 py-2 text-gray-700 cursor-not-allowed"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Modal Edit */}
+      {/* MODAL EDIT */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-lg relative">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl">
             <h2 className="text-xl font-bold mb-4">Edit Profile</h2>
+
+            <div className="flex justify-center mb-4">
+              <img
+                src={photoPreview || profile.photo || "/avatar.png"}
+                className="w-24 h-24 rounded-full object-cover border"
+              />
+            </div>
 
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 setShowConfirm(true);
               }}
-              className="flex flex-col gap-4"
+              className="space-y-4"
             >
-              <div>
-                <label className="block font-medium mb-1">Foto</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      setPhoto(e.target.files[0]);
-                    }
-                  }}
-                  className="border border-gray-300 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition"
-                />
-              </div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setPhoto(file);
+                    setPhotoPreview(URL.createObjectURL(file));
+                  }
+                }}
+              />
 
-              <div>
-                <label className="block font-medium mb-1">Nomor HP</label>
-                <input
-                  type="text"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="border border-gray-300 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition"
-                />
-              </div>
+              <input
+                type="text"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Nomor HP"
+                className="w-full border rounded-lg px-3 py-2"
+              />
 
-              <div>
-                <label className="block font-medium mb-1">Password Baru</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="border border-gray-300 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition"
-                />
-              </div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password baru (opsional)"
+                className="w-full border rounded-lg px-3 py-2"
+              />
 
-              <div className="flex justify-end gap-2 mt-2">
+              <div className="flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={closeModal}
-                  className="px-4 py-2 rounded border hover:bg-gray-100"
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 border rounded-lg"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:opacity-50"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg"
                 >
-                  {loading ? "Updating..." : "Simpan"}
+                  Simpan
                 </button>
               </div>
             </form>
@@ -220,61 +250,40 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Confirm Modal */}
+      {/* CONFIRM */}
       {showConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-lg relative">
-            <h3 className="text-lg font-bold mb-4">Konfirmasi Update</h3>
-            <p className="mb-4">Yakin ingin menyimpan perubahan ini?</p>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-xl">
+            <p className="mb-4">Yakin simpan perubahan?</p>
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowConfirm(false)}
-                className="px-4 py-2 rounded border hover:bg-gray-100"
+                className="px-4 py-2 border rounded"
               >
                 Batal
               </button>
               <button
                 onClick={handleUpdate}
                 disabled={loading}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:opacity-50"
+                className="px-4 py-2 bg-blue-600 text-white rounded"
               >
-                {loading ? "Updating..." : "Ya, Simpan"}
+                Ya, Simpan
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Toast */}
+      {/* TOAST */}
       {showToast && (
-        <div className="fixed top-5 right-5 z-50">
-          <div
-            className={`${
-              toastType === "success"
-                ? "bg-green-500 text-white"
-                : "bg-red-500 text-white"
-            } px-4 py-3 rounded shadow-lg flex items-center gap-2 animate-slide-in`}
-          >
-            <span>{toastMessage}</span>
-          </div>
+        <div
+          className={`fixed top-6 right-6 px-5 py-3 rounded-lg text-white shadow-lg ${
+            toastType === "success" ? "bg-green-500" : "bg-red-500"
+          }`}
+        >
+          {toastMessage}
         </div>
       )}
-
-      <style jsx>{`
-        @keyframes slide-in {
-          0% {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          100% {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-        .animate-slide-in {
-          animation: slide-in 0.3s ease-out;
-        }
-      `}</style>
     </div>
   );
 }
