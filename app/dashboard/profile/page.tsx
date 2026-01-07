@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useAuth } from "@/context/auth";
 import { useState, useEffect } from "react";
@@ -6,13 +7,12 @@ import api from "@/lib/api";
 export default function ProfilePage() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user, setUser } = useAuth();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
-  const [photo, setPhoto] = useState("");
+  const [photo, setPhoto] = useState<File | string>("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
@@ -31,6 +31,7 @@ export default function ProfilePage() {
     setTimeout(() => setShowToast(false), 3000);
   };
 
+  // Fetch profile dari backend
   const fetchProfile = async () => {
     try {
       const res = await api.get("/user/me/profile");
@@ -43,6 +44,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const openModal = () => {
@@ -58,17 +60,31 @@ export default function ProfilePage() {
   const handleUpdate = async () => {
     try {
       setLoading(true);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const payload: any = { photo, phone };
-      if (password) payload.password = password;
 
-      const res = await api.patch("/user/me", payload);
-      setProfile(res.data);
-      setUser(res.data);
+      const formData = new FormData();
+      formData.append("phone", phone);
+      if (password) formData.append("password", password);
+
+      if (photo) {
+        if (typeof photo === "string") {
+          formData.append("photo", photo); // URL lama
+        } else {
+          formData.append("photo", photo); // File baru
+        }
+      }
+
+      await api.patch("/user/me", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      // Setelah sukses patch, fetch ulang profile dari backend
+      await fetchProfile();
+      // Update user context supaya global state juga terbaru
+      setUser(profile);
+
       setPassword("");
       closeModal();
       showToastMessage("Profile berhasil diperbarui!", "success");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error(err);
       showToastMessage(
@@ -106,6 +122,7 @@ export default function ProfilePage() {
         <div className="p-6 flex flex-col md:flex-row items-center gap-6">
           <div className="flex flex-col items-center">
             {profile.photo ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={profile.photo}
                 alt="Foto"
@@ -144,16 +161,20 @@ export default function ProfilePage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                setShowConfirm(true); // open confirm modal
+                setShowConfirm(true);
               }}
               className="flex flex-col gap-4"
             >
               <div>
-                <label className="block font-medium mb-1">Foto URL</label>
+                <label className="block font-medium mb-1">Foto</label>
                 <input
-                  type="text"
-                  value={photo}
-                  onChange={(e) => setPhoto(e.target.value)}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setPhoto(e.target.files[0]);
+                    }
+                  }}
                   className="border border-gray-300 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition"
                 />
               </div>

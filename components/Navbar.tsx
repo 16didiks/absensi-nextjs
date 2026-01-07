@@ -93,13 +93,6 @@ export default function Navbar() {
                 onClick={() => setOpen(!open)}
                 className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded transition"
               >
-                {user.photo && (
-                  <img
-                    src={user.photo}
-                    alt="user"
-                    className="w-6 h-6 rounded-full object-cover"
-                  />
-                )}
                 <span className="text-gray-700 font-medium">{user.name}</span>
                 <svg
                   className={`w-4 h-4 transition-transform ${
