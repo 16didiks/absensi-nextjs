@@ -35,6 +35,7 @@ export default function AttendancePage() {
       setType("success");
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setMessage(err.response?.data?.message || "Gagal absensi");
       setType("error");

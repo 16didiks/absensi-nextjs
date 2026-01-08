@@ -11,6 +11,19 @@ export default function HRDSummaryPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // 🔧 Helper format jam
+  const formatTime = (value?: string | null) => {
+    if (!value) return "-";
+
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return "-";
+
+    const hh = date.getHours().toString().padStart(2, "0");
+    const mm = date.getMinutes().toString().padStart(2, "0");
+
+    return `${hh}:${mm}`;
+  };
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -22,7 +35,6 @@ export default function HRDSummaryPage() {
         return;
       }
 
-      // ✅ build query hanya kalau ada value
       const params: any = {};
       if (from) params.from = from;
       if (to) params.to = to;
@@ -46,14 +58,13 @@ export default function HRDSummaryPage() {
     }
   };
 
-  // ✅ fetch awal (tanpa filter)
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div>
+    <div className="p-4">
       <h1 className="text-xl font-bold mb-4">Summary Karyawan</h1>
 
       <div className="flex gap-2 mb-4">
@@ -100,8 +111,10 @@ export default function HRDSummaryPage() {
               {user.summary?.map((item: any, idx: number) => (
                 <tr key={idx}>
                   <td className="border px-2 py-1">{item.tanggal || "-"}</td>
-                  <td className="border px-2 py-1">{item.masuk || "-"}</td>
-                  <td className="border px-2 py-1">{item.pulang || "-"}</td>
+                  <td className="border px-2 py-1">{formatTime(item.masuk)}</td>
+                  <td className="border px-2 py-1">
+                    {formatTime(item.pulang)}
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -8,16 +8,27 @@ export default function SummaryPage() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
 
+  // 🔧 Helper format jam
+  const formatTime = (value?: string | null) => {
+    if (!value) return "-";
+
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return "-";
+
+    const hh = date.getHours().toString().padStart(2, "0");
+    const mm = date.getMinutes().toString().padStart(2, "0");
+
+    return `${hh}:${mm}`;
+  };
+
   const fetchSummary = async () => {
     const token = localStorage.getItem("token");
 
-    // 🔑 FIX: kirim query hanya jika ada value
     let url = `${process.env.NEXT_PUBLIC_API_URL}/attendances`;
 
     const params: string[] = [];
     if (from) params.push(`from=${from}`);
     if (to) params.push(`to=${to}`);
-
     if (params.length > 0) {
       url += `?${params.join("&")}`;
     }
@@ -30,12 +41,12 @@ export default function SummaryPage() {
   };
 
   useEffect(() => {
-    fetchSummary(); // default → tanpa filter
+    fetchSummary();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div>
+    <div className="p-4">
       <h1 className="text-xl font-bold mb-4">Summary Absen</h1>
 
       <div className="flex gap-2 mb-4">
@@ -70,9 +81,9 @@ export default function SummaryPage() {
         <tbody>
           {summary.map((item, idx) => (
             <tr key={idx}>
-              <td className="border px-2 py-1">{item.tanggal}</td>
-              <td className="border px-2 py-1">{item.masuk}</td>
-              <td className="border px-2 py-1">{item.pulang}</td>
+              <td className="border px-2 py-1">{item.tanggal || "-"}</td>
+              <td className="border px-2 py-1">{formatTime(item.masuk)}</td>
+              <td className="border px-2 py-1">{formatTime(item.pulang)}</td>
             </tr>
           ))}
         </tbody>
